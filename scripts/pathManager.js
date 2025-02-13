@@ -1,4 +1,4 @@
-import { Point, PointFactory, MinkowskiParameter, Segment } from "./point.js"
+import { Point, PointFactory, MinkowskiParameter, Segment, debugLog } from "./point.js"
 import { FTPUtility } from "./utility.js"
 
 // Because apparently JS doesn't have this built in...
@@ -91,7 +91,7 @@ class PriorityQueue
 	log (depth_ = 5)
 	{
 		for (let i = 0; i < Math.min (depth_, this.length); ++i)
-			console.log (this.data[i]);
+			debugLog(this.data[i]);
 	}
 
 	get length () { return this.data.length; }
@@ -102,14 +102,21 @@ class PriorityQueue
 */
 class Node
 {
-	constructor (origin_, dest_, distTraveled_, prev_ = null)
+	constructor (origin_, dest_, distTraveled_, prev_ = null, diagCount_ = 0)
 	{
 		this._origin = origin_;
 		this._dest = dest_;
 		this.distTraveled = distTraveled_;
 		this.distToDest = origin_.distToSegment (dest_);
-		this.cost = this.distTraveled + this.distToDest;
 		this.prev = prev_;
+		this.diagonalCount = diagCount_;
+		
+		// For PF2E, we want to prioritize paths that use diagonals efficiently
+		if (origin_.point.metric === MinkowskiParameter.PF2E) {
+			this.cost = this.distTraveled + this.distToDest;
+		} else {
+			this.cost = this.distTraveled + this.distToDest;
+		}
 	}
 
 	// Tokens of all sizes are represented by their upper-left point (index 0), a width, and a height
@@ -159,8 +166,8 @@ export class Path
 			if (! data_.token && ! (isValidPosNumber (data_.width) && isValidPosNumber (data_.height)))
 				throw "FindThePath | Invalid Path initialization: must provide width/height or token";
 		}
-		else if (! data_.origin instanceof Segment
-			 || (! data_.dest instanceof Segment && ! data_.dest instanceof Point))
+		else if (!(data_.origin instanceof Segment)
+			 || (!(data_.dest instanceof Segment) && !(data_.dest instanceof Point)))
 		{
 			throw "FindThePath | Invalid Path initialization: bad start/goal Segment";
 		}
@@ -207,6 +214,7 @@ export class Path
 	{
 		let frontier = new PriorityQueue ();
 		let visited = new Map ();
+		let startTime = performance.now(); // Record the start time
 		let n = new Node (this.origin, this.dest, 0);
 		const origin = n.origin;
 
@@ -217,6 +225,12 @@ export class Path
 
 		while (frontier.length > 0)
 		{
+			// Timeout check: break gently after 2 seconds
+			if (performance.now() - startTime > 2000) {
+				debugLog("FindThePath | Search timed out after 2 seconds");
+				break;
+			}
+
 			n = frontier.pop ();
 
 			if (this._constrainVision && n.prev && ! this._utility.losCenter (origin, n.originSeg))
@@ -244,31 +258,71 @@ export class Path
 
 			if (n.distTraveled > this.maxPathLength)
 			{
-				console.log ("FindThePath | Failed to find path to goal state");
 				// This is the first node that is out of range, so the previous node was valid
-				// todo: This won't hold because of tokens moving through other tokens' spaces
+                // todo: This won't hold because of tokens moving through other tokens' spaces
+				debugLog("FindThePath | Path exceeded movement limit:");
+				debugLog(`  Total distance: ${n.distTraveled}`);
+				debugLog(`  Movement limit: ${this.maxPathLength}`);
+				debugLog(`  Total diagonals used: ${n.diagonalCount}`);
+				debugLog("FindThePath | Failed to find path to goal state");
 				n = n.prev;
 				break;
 			}
  
 			// Since the goal point is checked for all points in the origin set against all points in the dest set, we only need to expand the origin node.
 			n.origin.neighbors ().map (p => {
-				return new Node (PointFactory.segmentFromPoint (p, width, height),
-						 n.destSeg,
-						 n.distTraveled + 1,
-						 n);
-			}).filter (node => {
-				if (! node.originSeg.isValid)
-					return false;
+				const nextSeg = PointFactory.segmentFromPoint (p, width, height);
+				if (!nextSeg || !nextSeg.isValid) return null;
 
-				const id = node.id;
+				let newDist = n.distTraveled + 1;
+				let newDiagCount = n.diagonalCount;
 
-				if (visited.has (id))
-					return false;
+				if (this.origin.point.metric === MinkowskiParameter.PF2E) {
+					const dx = p.x - n.origin.x;
+					const dy = p.y - n.origin.y;
+					const isDiagonal = (dx !== 0 && dy !== 0);
 
-				visited.set (id, 1);
-				return true;
-			}).forEach (node => {
+					let stepCost = 1;
+
+					if (isDiagonal) {
+						newDiagCount = n.diagonalCount + 1;
+						stepCost = (newDiagCount % 2 === 1) ? 1 : 2;
+						debugLog(`FindThePath | Diagonal move #${newDiagCount}:`);
+						debugLog(`  From: (${n.origin.x},${n.origin.y}) to (${p.x},${p.y})`);
+						debugLog(`  Previous diagonal count: ${n.diagonalCount}`);
+						debugLog(`  New diagonal count: ${newDiagCount}`);
+						debugLog(`  Step cost: ${stepCost}`);
+						debugLog(`  Current total: ${n.distTraveled}`);
+						debugLog(`  New total: ${n.distTraveled + stepCost}`);
+					}
+
+					// Optional: Add difficult terrain costs
+					if (p.data?.isDifficult) {
+						stepCost += 1;
+					}
+
+					newDist = n.distTraveled + stepCost;
+				}
+
+				const node = new Node (
+					nextSeg,
+					n.destSeg,
+					newDist,
+					n,
+					newDiagCount
+				);
+
+				// Log total path cost for this node
+				if (this.origin.point.metric === MinkowskiParameter.PF2E) {
+					debugLog(`FindThePath | Node total cost: ${node.cost}`);
+					debugLog(`  Distance traveled: ${node.distTraveled}`);
+					debugLog(`  Distance to dest: ${node.distToDest}`);
+					debugLog(`  Diagonal count: ${node.diagonalCount}`);
+				}
+
+				return node;
+			}).filter (node => node)
+			.forEach (node => {
 				frontier.push (node, this._priorityMeasure);
 			});
 		}
@@ -326,7 +380,7 @@ export class PathManager
 	// To avoid this, use pointsWithinRangeOfToken (token_, dist_)
 	static async pointsWithinRange (seg_, dist_, collisionConfig_ = { checkCollision: true, whitelist: new Array () })
 	{
-		if (! seg_ instanceof Segment)
+		if (!(seg_ instanceof Segment))
 		{
 			console.log ("FindThePath | Invalid starting segment for call to pointsWithinRange");
 			return ret;
@@ -462,7 +516,7 @@ export class PathManager
 			"config": config_
 		});
 
-		console.log ("FindThePath | Searching for path between tokens %s and %s", token_.id, target_.id);
+		debugLog("FindThePath | Searching for path between tokens %s and %s", token_.id, target_.id);
 		await p.findPath ();
 
 		tokenPaths.set (target_.id, p);
@@ -499,7 +553,8 @@ Hooks.on ("ready", () =>
 		game.FindThePath = {
 			"Chebyshev": {},
 			"Euclidean": {},
-			"Manhattan": {}
+			"Manhattan": {},
+			"PF2E": {}
 		};
 	}
 
@@ -511,6 +566,9 @@ Hooks.on ("ready", () =>
 
 	game.FindThePath.Manhattan.PathManager = new PathManager (MinkowskiParameter.Manhattan);
 	game.FindThePath.Manhattan.PointFactory = new PointFactory (MinkowskiParameter.Manhattan);
+
+	game.FindThePath.PF2E.PointFactory = new PointFactory (MinkowskiParameter.PF2E);
+	game.FindThePath.PF2E.PathManager = new PathManager (MinkowskiParameter.PF2E);
 
 	game.FindThePath.Utility = new FTPUtility ({ name: "GlobalFTPUtility" });
 });

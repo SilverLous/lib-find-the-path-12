@@ -5,6 +5,7 @@ export const MinkowskiParameter =
 {
 	Manhattan: 1,
 	Euclidean: 2,
+	PF2E: 3,
 	Chebyshev: Infinity,
 }
 
@@ -95,6 +96,25 @@ function manhattanNeighborsFunc (point_)
 	return n
 }
 
+// Add new neighbor function
+function pf2eNeighborsFunc(point_) {
+	let n = new Array();
+
+	const pushIfDefined = (vector_, dx_, dy_) => {
+		const p = PointFactory.fromPoint(point_, dx_, dy_);
+		if (p && p.isValid) vector_.push(p);
+	};
+
+	for (let dx of [-1, 0, 1]) {
+		for (let dy of [-1, 0, 1]) {
+			if (dx === 0 && dy === 0) continue;
+			pushIfDefined(n, dx, dy);
+		}
+	}
+
+	return n;
+}
+
 // Represents a token's position as a point in grid-space rather than pixel-space and provides some useful methods.
 export class Point
 {
@@ -142,6 +162,8 @@ export class Point
 
 				if (this._metric === MinkowskiParameter.Chebyshev)
 					return chebyshevNeighborsFunc;
+				if (this._metric === MinkowskiParameter.PF2E)
+					return pf2eNeighborsFunc;
 
 				return manhattanNeighborsFunc;
 			} ;
@@ -152,14 +174,18 @@ export class Point
 	// Calculate the distance between Points p1 and p2 using the L-norm
 	static lp (p1_, p2_, p_)
 	{
+		if (!p1_ || !p2_) return undefined;
+
 		if (p_ === MinkowskiParameter.Chebyshev)
 			return Point.Chebyshev (p1_, p2_);
 		if (p_ === MinkowskiParameter.Manhattan)
 			return Point.Manhattan (p1_, p2_);
 		if (p_ === MinkowskiParameter.Euclidean)
-			return Point.Euclidean (p1_, p2_);
+			return Point.Euclidean(p1_, p2_);
+		if (p_ === MinkowskiParameter.PF2E)
+			return Point.PF2E(p1_, p2_);
 		if (p_ <= 0)
-			return undefined
+			return undefined;
 
 		console.log ("FindThePath | Using L_%f-norm?!", p_);
 		// Why am I supporting this? Why are you using this? What hellish system are you implementing?
@@ -180,6 +206,21 @@ export class Point
 	{
 		return Math.hypot (p1_.x - p2_.x, p1_.y - p2_.y)
 	};
+	// PF2E diagonal movement cost calculation
+	static PF2E(p1_, p2_) {
+		const dx = Math.abs(p1_.x - p2_.x);
+		const dy = Math.abs(p1_.y - p2_.y);
+		
+		// Use as many diagonals as possible (minimum of dx and dy)
+		const diagonals = Math.min(dx, dy);
+		// Remaining distance must be covered orthogonally
+		const straight = Math.abs(dx - dy);
+		
+		// First diagonal costs 1, second costs 2, alternating
+		const diagonalCost = Math.floor(diagonals / 2) * 3 + (diagonals % 2);
+		
+		return diagonalCost + straight;
+	}
 
 	distToPoint (p_)     { return Point.lp (this, p_, this.metric); }
 	// Minimum distance from this point to a coordinate with width w_ and height h_
@@ -369,7 +410,7 @@ export class Segment
 			"x": this.point.x + this.width / 2,
 			"y": this.point.y + this.height / 2,
 			"data": this.point.data,
-			"metric": this.metric,
+			"metric": this.point.metric,
 			"neighborsFunc": this.point.neighborsFunc
 		})
 	}
@@ -472,8 +513,8 @@ export class Segment
 		return this._pointSet;
 	}
 
-	get width () { return this._h; }
-	get height () { return this._w; }
+	get width () { return this._w; }
+	get height () { return this._h; }
 	get pw () { return this.width * canvas.grid.size; }
 	get ph () { return this.height * canvas.grid.size; }
 }

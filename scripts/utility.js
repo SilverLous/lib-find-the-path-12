@@ -127,16 +127,23 @@ export class FTPUtility
 
 		// A token may take up multiple tiles, and it moves by translation from an old set to a new set. A movement is valid if, for each translation, the old tile has line of sight on the new tile and each tile in the new set has los on every other tile in the set.
 		for (let i = 0; i < oldSegment_.width * oldSegment_.height; ++i)
-		{
-			if (canvas.walls.checkCollision (new Ray({ x: ps1[i].cpx, y: ps1[i].cpy },
-								 { x: ps2[i].cpx, y: ps2[i].cpy })))
+		{		
+			if (CONFIG.Canvas.polygonBackends.sight.testCollision(
+			    { x: ps1[i].cpx, y: ps1[i].cpy },
+			    { x: ps2[i].cpx, y: ps2[i].cpy },
+			    { type: "sight", mode: "any" }
+			))
 				return false;
 	
 			const p = { x: ps2[i].cpx, y: ps2[i].cpy };
 
 			// If A has los on B then B has los on A, so we only need to check half of these
 			for (let j = i + 1; j < newSegment_.width * newSegment_.height; ++j)
-				if (canvas.walls.checkCollision (new Ray(p, { x: ps2[j].cpx, y: ps2[j].cpy})))
+				if (CONFIG.Canvas.polygonBackends.sight.testCollision(
+					p,
+					{ x: ps2[j].cpx, y: ps2[j].cpy },
+					{ type: "sight", mode: "any" }
+				))
 					return false;
 		}
 
@@ -159,8 +166,11 @@ export class FTPUtility
 		const p1 = startSegment_.center;
 		const p2 = endSegment_.center;
 
-		return ! canvas.walls.checkCollision (new Ray({ x: p1.px, y: p1.py }, { x: p2.px, y: p2.py }),
-						      { blockMovement: false, blockSenses: true, mode: "any" });
+		return !CONFIG.Canvas.polygonBackends.sight.testCollision(
+			{ x: p1.px, y: p1.py },
+			{ x: p2.px, y: p2.py },
+			{ type: "sight", mode: "any" }
+		);
 	}
 
 	partialLOS (oldSegment_, newSegment_)
@@ -168,8 +178,11 @@ export class FTPUtility
 		if (! oldSegment_.isValid || ! newSegment_.isValid)
 			return false;
 
-		return canvas.walls.checkCollision (new Ray({ x: oldSegment_.center.px, y: oldSegment_.center.py },
-							    { x: newSegment_.center.px, y: newSegment_.center.py }));
+		return CONFIG.Canvas.polygonBackends.sight.testCollision(
+			{ x: oldSegment_.center.px, y: oldSegment_.center.py },
+			{ x: newSegment_.center.px, y: newSegment_.center.py },
+			{ type: "sight", mode: "any" }
+		);
 	}
 
 	// Moves the stored token to a grid segment_
@@ -187,12 +200,12 @@ export class FTPUtility
 			return true;
 
 		// Calculate the angular distance to the destination grid space
-		const dTheta = cur.radialDistToSegment (segment_, this.tokenDoc.data.rotation, AngleTypes.DEG);
+		const dTheta = cur.radialDistToSegment (segment_, this.tokenDoc.rotation, AngleTypes.DEG);
 
 		if (dTheta)
 		{
 			// Rotate the token to face the direction it moves in
-			await this.tokenDoc.update ({ rotation: (this.tokenDoc.data.rotation + dTheta) % 360 }).then (
+			await this.tokenDoc.update ({ rotation: (this.tokenDoc.rotation + dTheta) % 360 }).then (
 			(resolve, reject) => { 
 				// Wait between rotating and moving
 				return new Promise (resolve => setTimeout (resolve, dTheta / 360 * rotateWait_));

@@ -1,12 +1,17 @@
 # lib-find-the-path
 ## Changelog
-1.4.0
+###2.0.4
+-Major update to FoundryVTT v12 APIs
+-Implemented PF2E movement cost calculations (alternating diagonal movement costs (5-10-5-10)).
+-Github workflow to automatically update module.json and module.zip on release
+
+###1.4.0
 <p>Added configuration to enable non-omniscient path planning. Added a method to determine line of sight for only vision-blocking walls (i.e. it ignores ethereal walls). Refactored configuration of path manager and utility class.</p>
 
-1.3.0
+###1.3.0
 <p>Refactored segments to provide better structure for eventual hex support.</p>
 
-1.2.0
+###1.2.0
 <ol>
 <li>Added FTPUtility class that exposes useful methods
   <ol>
@@ -32,7 +37,7 @@
 <li>Various bug fixes</li>
 </ol>
 
-1.1.2
+###1.1.2
 <p>Big, breaking refactor for general improvements, code cleanliness, stability, etc...</p>
 <ol>
   <li>Path planning can now be done from macros. See the <a href="https://github.com/dwonderley/lib-find-the-path/wiki">wiki page</a> for more information.</li>
@@ -47,7 +52,7 @@
 
 <p>See the <a href="https://github.com/dwonderley/lib-find-the-path/wiki">wiki page</a> for examples of this library's use.</p>
 
-<p>This module is a work in progress, but I have tested it extensively. If you find bugs or have questions, comments, or requests, please don't hesitate to leave me a comment here or on the FVTT discord (@Dave Of Wonders).</p>
+<p>This module is a work in progress, but I have tested it extensively. If you find bugs or have questions, comments, or requests, please don't hesitate to leave me a comment here or on the FVTT discord Original Author:(@Dave Of Wonders) or for more recent updates to FoundryVTT v12 and Pathfinder 2e (@malvargr (CircusGM)).</p>
 
 ## Terminology
 Token is a FVTT class that contains various information about game tokens, such as their pixel coordinates, the actors they represent, or their names. Tokens exist on the Canvas. The Canvas is a grid of pixel coordinates, originating at the top-left corner, with +x going left to right and +y going top to bottom. 

@@ -11,7 +11,7 @@
       "discord": "circusGM"
     }
   ],
-  "version": "2.0.2",
+  "version": "#{VERSION}#",
   "compatibility": {
     "minimum": "12",
     "verified": "12.331",
@@ -19,7 +19,9 @@
   },
   "esmodules": ["scripts/pathManager.js", "scripts/point.js", "scripts/utility.js"],
   "styles": [],
-  "url": "https://github.com/CircusGM/lib-find-the-path-12",
-  "manifest": "https://raw.githubusercontent.com/CircusGM/lib-find-the-path-12/master/module.json",
-  "download": "https://github.com/CircusGM/lib-find-the-path-12/releases/latest/download/lib-find-the-path-12-master.zip"
+  "url": "#{URL}#",
+  "manifest": "#{MANIFEST}#",
+  "download": "#{DOWNLOAD}#",
+  "license": "LICENSE",
+  "readme": "README.md"
 }

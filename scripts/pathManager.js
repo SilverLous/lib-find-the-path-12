@@ -572,3 +572,14 @@ Hooks.on ("ready", () =>
 
 	game.FindThePath.Utility = new FTPUtility ({ name: "GlobalFTPUtility" });
 });
+
+Hooks.once ("init", () => {
+	game.settings.register("lib-find-the-path-12", "enableDebugConsoleMessages", {
+		name: "Enable Debug Console Messages",
+		hint: "If enabled, lib-find-the-path will output detailed debug messages to the console.",
+		scope: "world",
+		config: true,
+		default: false,
+		type: Boolean
+	});
+});

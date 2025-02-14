@@ -1,5 +1,13 @@
 // todo: support hex
 
+// TODO rename file to more generic util or move debugLog to a different file,
+// but utiltiy.js imports this for some reason so it's here to avoid import loops
+export function debugLog(...args) {
+	if (game.settings.get("lib-find-the-path-12", "enableDebugConsoleMessages")) {
+		console.log("lib-find-the-path-12 | DEBUG: ", ...args);
+	}
+}
+
 // The types of distance norms typical in tile-based games
 export const MinkowskiParameter =
 {

@@ -199,17 +199,20 @@ export class FTPUtility
 		if (segment_.equals (cur))
 			return true;
 
-		// Calculate the angular distance to the destination grid space
-		const dTheta = cur.radialDistToSegment (segment_, this.tokenDoc.rotation, AngleTypes.DEG);
+		// Check if rotation is disabled
+		if (!this.tokenDoc.lockRotation) {
+			// Calculate the angular distance to the destination grid space
+			const dTheta = cur.radialDistToSegment (segment_, this.tokenDoc.rotation, AngleTypes.DEG);
 
-		if (dTheta)
-		{
-			// Rotate the token to face the direction it moves in
-			await this.tokenDoc.update ({ rotation: (this.tokenDoc.rotation + dTheta) % 360 }).then (
-			(resolve, reject) => { 
-				// Wait between rotating and moving
-				return new Promise (resolve => setTimeout (resolve, dTheta / 360 * rotateWait_));
-			});
+			if (dTheta)
+			{
+				// Rotate the token to face the direction it moves in
+				await this.tokenDoc.update ({ rotation: (this.tokenDoc.rotation + dTheta) % 360 }).then (
+				(resolve, reject) => { 
+					// Wait between rotating and moving
+					return new Promise (resolve => setTimeout (resolve, dTheta / 360 * rotateWait_));
+				});
+			}
 		}
 
 		let ok = true;

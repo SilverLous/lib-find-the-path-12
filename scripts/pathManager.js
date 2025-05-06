@@ -256,6 +256,7 @@ export class Path {
 					const isDiagonal = (dx !== 0 && dy !== 0);
 
 					let stepCost = 1;
+					debugLog(`distance LEL:`);
 
 					if (isDiagonal && !canvas.grid.isHexagonal) {
 						newDiagCount = n.diagonalCount + 1;

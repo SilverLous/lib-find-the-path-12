@@ -113,6 +113,13 @@ function pf2eNeighborsFunc(point_) {
 		if (p && p.isValid) vector_.push(p);
 	};
 
+	if (canvas.grid.isHexagonal) {
+		for (let cp of canvas.grid.grid.getNeighbors(point_._x, point_._y)) {
+			pushIfDefined(n, cp[0] - point_._x, cp[1] - point_._y);
+		}
+		return n;
+	}
+
 	for (let dx of [-1, 0, 1]) {
 		for (let dy of [-1, 0, 1]) {
 			if (dx === 0 && dy === 0) continue;
@@ -124,19 +131,16 @@ function pf2eNeighborsFunc(point_) {
 }
 
 // Represents a token's position as a point in grid-space rather than pixel-space and provides some useful methods.
-export class Point
-{
-	constructor (data_)
-	{
-		if (data_.px)
-			this._x = data_.px / this.scale;
+		if (data_.px) {
+			this._x = canvas.grid.getGridPositionFromPixels(data_.px, data_.py)[1];
+		}
 		else if (data_.x)
 			this._x = data_.x;
 		else
 			this._x = 0;
 
 		if (data_.py)
-			this._y = data_.py / this.scale;
+			this._y = canvas.grid.getGridPositionFromPixels(data_.px, data_.py)[0];
 		else if (data_.y)
 			this._y = data_.y;
 		else
@@ -373,7 +377,7 @@ export class Point
 	get y () { return this._y; }
 	// x and y offset, in pixels
 	get px () { return this.x * this.scale; }
-	get py () { return this.y * this.scale; }
+	get py() { return canvas.grid.getPixelsFromGridPosition(this.x, this.y)[0]; }
 	// Returns the offset of the point's center, in pixels
 	get cx () { return this.x + 0.5; }
 	get cy () { return this.y + 0.5; }

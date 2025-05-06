@@ -284,7 +284,7 @@ export class Path
 
 					let stepCost = 1;
 
-					if (isDiagonal) {
+					if (isDiagonal && !canvas.grid.isHexagonal) {
 						newDiagCount = n.diagonalCount + 1;
 						stepCost = (newDiagCount % 2 === 1) ? 1 : 2;
 						debugLog(`FindThePath | Diagonal move #${newDiagCount}:`);

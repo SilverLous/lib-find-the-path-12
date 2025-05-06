@@ -222,6 +222,7 @@ function pf2eNeighborsFunc(point_) {
 	static PF2E(p1_, p2_) {
 		const dx = Math.abs(p1_.x - p2_.x);
 		const dy = Math.abs(p1_.y - p2_.y);
+		if (canvas.grid.isHexagonal) { return dx + dy; }
 		
 		// Use as many diagonals as possible (minimum of dx and dy)
 		const diagonals = Math.min(dx, dy);

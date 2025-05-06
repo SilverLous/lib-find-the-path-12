@@ -50,8 +50,6 @@
 
 <p>The library may be called "Find the Path," but the Point class is the innovation I think people will find most useful. It provides methods for handling tokens of any size, calculating the minimum distance between points, pixels, and tokens, calculating rotations, and finding neighbors. Importantly, it does these things independent of grid size, distance metrics (it supports several), game system, and the insane coordinate-system-originates-in-the-top-left industry standard. While the PathManager provides methods to find paths between tokens, points, pixels, and coordinates, it's the power of the Point class that actually makes it possible.</p>
 
-<p>See the <a href="https://github.com/dwonderley/lib-find-the-path/wiki">wiki page</a> for examples of this library's use.</p>
-
 <p>This module is a work in progress, but I have tested it extensively. If you find bugs or have questions, comments, or requests, please don't hesitate to leave me a comment here or on the FVTT discord Original Author:(@Dave Of Wonders) or for more recent updates to FoundryVTT v12 and Pathfinder 2e (@malvargr (CircusGM)).</p>
 
 ## Terminology

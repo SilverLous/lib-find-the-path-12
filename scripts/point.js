@@ -130,7 +130,11 @@ function pf2eNeighborsFunc(point_) {
 	return n;
 }
 
-// Represents a token's position as a point in grid-space rather than pixel-space and provides some useful methods.
+export class Point
+{
+	constructor (data_)
+	{
+		// Represents a token's position as a point in grid-space rather than pixel-space and provides some useful methods.
 		if (data_.px) {
 			this._x = canvas.grid.getGridPositionFromPixels(data_.px, data_.py)[1];
 		}

@@ -114,8 +114,8 @@ function pf2eNeighborsFunc(point_) {
 	};
 
 	if (canvas.grid.isHexagonal) {
-		for (let cp of canvas.grid.grid.getNeighbors(point_._x, point_._y)) {
-			pushIfDefined(n, cp[0] - point_._x, cp[1] - point_._y);
+		for (let cp of canvas.grid.getAdjacentOffsets({"i": point_._y, "j" : point_._x})) {
+			pushIfDefined(n, cp["j"] - point_._x, cp["i"] - point_._y, );
 		}
 		return n;
 	}
@@ -136,15 +136,16 @@ export class Point
 	{
 		// Represents a token's position as a point in grid-space rather than pixel-space and provides some useful methods.
 		if (data_.px) {
-			this._x = canvas.grid.getGridPositionFromPixels(data_.px, data_.py)[1];
+			this._x = canvas.grid.getOffset({x: data_.px, y: data_.py})["j"];
 		}
 		else if (data_.x)
 			this._x = data_.x;
 		else
 			this._x = 0;
 
-		if (data_.py)
-			this._y = canvas.grid.getGridPositionFromPixels(data_.px, data_.py)[0];
+		if (data_.py){
+			this._y = canvas.grid.getOffset({x: data_.px, y: data_.py})["i"];
+		}
 		else if (data_.y)
 			this._y = data_.y;
 		else
@@ -381,14 +382,19 @@ export class Point
 	get x () { return this._x; }
 	get y () { return this._y; }
 	// x and y offset, in pixels
-	get px () { return this.x * this.scale; }
-	get py() { return canvas.grid.getPixelsFromGridPosition(this.x, this.y)[0]; }
+	get px() { 	return canvas.grid.getCenterPoint({"j": this.x, "i": this.y}).x; }
+	get py() { 
+		let out = canvas.grid.getCenterPoint({"j": this.x, "i": this.y}).y;
+		if (canvas.grid.isHexagonal) out += this.scale / ((1 / 3.0)*10.0);
+		return out;
+	}
 	// Returns the offset of the point's center, in pixels
 	get cx () { return this.x + 0.5; }
 	get cy () { return this.y + 0.5; }
 	// Returns the offset of the point's center, in pixels
-	get cpx () { return (this.x + 0.5) * this.scale; }
-	get cpy () { return (this.y + 0.5) * this.scale; }
+	get cpx () { //console.log("find_", canvas.grid.getCenterPoint({"j": this.x, "i": this.y}));
+		return canvas.grid.getCenterPoint({"j": this.x, "i": this.y}).x; }
+	get cpy () { return canvas.grid.getCenterPoint({"j": this.x, "i": this.y}).y; }
 
 	get scale () { return canvas.grid.size; }
 
